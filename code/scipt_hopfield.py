@@ -110,7 +110,7 @@ def evolution_hopfield_synchronous(test_array,epsilon,w,NO_OF_ITERATIONS,VERBOSE
     hamming_distance = np.zeros((NO_OF_ITERATIONS, P))
     if VERBOSE:
         fig = plt.figure(figsize = (8, 8))
-    for iteration in tqdm(range(NO_OF_ITERATIONS)):
+    for iteration in range(NO_OF_ITERATIONS):
         h = w.dot(test_array)
         test_array = np.where(h<0, -1, 1)
         #     print(test_array.shape)
@@ -126,7 +126,7 @@ def average_recall(Nstate,epsilon,w,NO_OF_ITERATIONS,P_perturb=0.2):
     P = epsilon.shape[0]
     N = epsilon.shape[1]
     all_recall = np.zeros((Nstate,2))
-    for i in range(Nstate):
+    for i in tqdm(range(Nstate)):
         perturbed_state, index_state = perturbation(epsilon, p = P_perturb)
         all_recall[i,0] = index_state # index of the random state
         final_state, hamming_distance = evolution_hopfield_synchronous(perturbed_state,epsilon,w,NO_OF_ITERATIONS)
@@ -138,6 +138,21 @@ def average_recall(Nstate,epsilon,w,NO_OF_ITERATIONS,P_perturb=0.2):
             all_recall[i,1] = ind_m1
     return all_recall
     
+
+def simulation_P_perturb(N,P,sampling,P_sparsity=0.5,NO_OF_STATE=100,VERBOSE=False):
+    epsilon_random = np.where(np.random.rand(P,N) < P_sparsity,-1,1)
+    w_random = compute_weights_fast(epsilon_random)
+
+    all_P_perturb =np.arange(sampling[0],sampling[1],sampling[2])
+    percent_recall = np.zeros((len(all_P_perturb),))
+    print(all_P_perturb)
+    for i, P_perturb in enumerate(all_P_perturb):
+        all_recall = average_recall(NO_OF_STATE,epsilon_random,w_random,NO_OF_ITERATIONS,P_perturb=P_perturb)
+        percent_recall[i]=100*np.sum((all_recall[:,0]-all_recall[:,1]) == 0) / NO_OF_STATE
+        print(i)
+    if VERBOSE:
+        plt.plot(all_P_perturb,percent_recall)
+    return percent_recall,all_P_perturb
 
 # Load digits images
 
@@ -203,8 +218,8 @@ plt.xlabel('Index where the iterations stabilize')
 N and P are constant, increase P_perturb
 """
 
-N=512
-P=20
+N=128
+P=10
 P_sparsity = 0.5 # sparsity level
 epsilon_random = np.where(np.random.rand(P,N) < P_sparsity,-1,1)
 w_random = compute_weights_fast(epsilon_random)
@@ -213,15 +228,30 @@ NO_OF_STATE=100
 all_recall = average_recall(NO_OF_STATE,epsilon_random,w_random,NO_OF_ITERATIONS,P_perturb=0.4)
 print("\n% of recall = "+ str(100*np.sum((all_recall[:,0]-all_recall[:,1]) == 0) / NO_OF_STATE))
 
-all_P_perturb =np.arange(0.1,0.9,0.05)
+all_P_perturb =np.arange(0.1,0.9,0.02)
 percent_recall = np.zeros((len(all_P_perturb),))
 for i, P_perturb in enumerate(all_P_perturb):
     all_recall = average_recall(NO_OF_STATE,epsilon_random,w_random,NO_OF_ITERATIONS,P_perturb=P_perturb)
     percent_recall[i]=100*np.sum((all_recall[:,0]-all_recall[:,1]) == 0) / NO_OF_STATE
 
+percent_recall, all_P_perturb=simulation_P_perturb(N,P, [0.2,0.6,0.02],P_sparsity=0.5,NO_OF_STATE=100)
+plt.plot(all_P_perturb,percent_recall)
 
 """
 N is constant, and increase P/N to see the evolution of the memorization
 """
 
+N=128
+sampling=[0.1,0.7,0.02]
+sample_p=np.arange(sampling[0],sampling[1],sampling[2])
+all_P=np.arange(2,30,2)
+
+all_percent_recall = np.zeros((len(all_P),len(sample_p)))
+for i, P in enumerate(all_P): 
+    percent_recall, all_P_perturb = simulation_P_perturb(N,P,sampling,P_sparsity=0.5,NO_OF_STATE=100)
+    all_percent_recall[i,:] = percent_recall
+    print("P = "+str(P))
+    
+for i in range(len(all_P)):
+    plt.plot(sample_p,all_percent_recall[i,:])
 
