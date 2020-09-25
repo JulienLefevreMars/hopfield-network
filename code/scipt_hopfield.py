@@ -244,7 +244,7 @@ N is constant, and increase P/N to see the evolution of the memorization
 N=128
 sampling=[0.1,0.7,0.02]
 sample_p=np.arange(sampling[0],sampling[1],sampling[2])
-all_P=np.arange(2,30,2)
+all_P=np.arange(2,40,4)
 
 all_percent_recall = np.zeros((len(all_P),len(sample_p)))
 for i, P in enumerate(all_P): 
