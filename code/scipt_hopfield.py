@@ -55,7 +55,10 @@ def compute_weights(epsilon):
 def compute_weights_fast(epsilon):
     P = epsilon.shape[0]
     N = epsilon.shape[1]
-    return 1/N*(epsilon.transpose().dot(epsilon)-P*np.identity(N))
+    J = 1/N*epsilon.transpose().dot(epsilon)
+    for i in range(N):
+        J[i,i] = 0
+    return J
 
 
 def perturbation(epsilon,p=0.2,perturbation_type='noise'):
@@ -73,7 +76,7 @@ def perturbation(epsilon,p=0.2,perturbation_type='noise'):
         NO_OF_BITS_TO_CHANGE = int(p*N)
         random_pattern_test = np.random.choice([1, -1], size=NO_OF_BITS_TO_CHANGE)
         test_array[:NO_OF_BITS_TO_CHANGE] = random_pattern_test
-    return test_array
+    return test_array, random_pattern
 
 def evolution_hopfield(test_array,epsilon,w,NO_OF_ITERATIONS):
     # Asynchronous version ?
@@ -90,7 +93,7 @@ def evolution_hopfield(test_array,epsilon,w,NO_OF_ITERATIONS):
             h[i] = 0
             for j in range(N):
                 h[i] += w[i, j]*test_array[j]
-        test_array = np.where(h<0, -1, 1)
+        test_array = np.where(h<0, -1, 1)  # a bit odd
         #     print(test_array.shape)
         for i in range(P):
         #         print(iteration)
@@ -119,7 +122,21 @@ def evolution_hopfield_synchronous(test_array,epsilon,w,NO_OF_ITERATIONS,VERBOSE
             plt.imshow(np.where(test_array.reshape(N_sqrt, N_sqrt)<1, 0, 1), cmap='gray')
     return test_array,hamming_distance
 
-
+def average_recall(Nstate,epsilon,w,NO_OF_ITERATIONS,P_perturb=0.2):
+    P = epsilon.shape[0]
+    N = epsilon.shape[1]
+    all_recall = np.zeros((Nstate,2))
+    for i in range(Nstate):
+        perturbed_state, index_state = perturbation(epsilon, p = P_perturb)
+        all_recall[i,0] = index_state # index of the random state
+        final_state, hamming_distance = evolution_hopfield_synchronous(perturbed_state,epsilon,w,NO_OF_ITERATIONS)
+        ind_m1=np.argmin(hamming_distance[-1,:])
+        ind_m2=np.argmin(hamming_distance[-2,:])
+        if (ind_m1!=ind_m2):
+            all_recall[i,1] = -1 # cycle of length 2
+        else:
+            all_recall[i,1] = ind_m1
+    return all_recall
     
 
 # Load digits images
@@ -147,7 +164,7 @@ P = epsilon.shape[0]
 # Associative memory
 # Perturbed digit
 
-perturbed_digit = perturbation(epsilon,p=0.3,perturbation_type='noise')
+perturbed_digit, index = perturbation(epsilon,p=0.3,perturbation_type='noise')
 plt.imshow(perturbed_digit.reshape(size,size))
 
 #evolution_hopfield(perturbed_digit,epsilon,w,10)
@@ -160,7 +177,7 @@ From several random configurations, what are the most frequent attractors ?
 NO_OF_RANDOM_CONFIG = 500
 NO_OF_ITERATIONS = 20
 stats = np.zeros((NO_OF_RANDOM_CONFIG,3)) # col 1: pattern where it converges col 2: index of stabilization
-p=0.1
+p=0.5
 
 for n in range(NO_OF_RANDOM_CONFIG):
     random_state = np.random.choice([-1,1],p=[p,1-p], size=N)
@@ -181,3 +198,30 @@ plt.xlabel('Final state')
 plt.subplot(1,2,2)
 plt.hist(stats[:,1])
 plt.xlabel('Index where the iterations stabilize')
+
+"""
+N and P are constant, increase P_perturb
+"""
+
+N=512
+P=20
+P_sparsity = 0.5 # sparsity level
+epsilon_random = np.where(np.random.rand(P,N) < P_sparsity,-1,1)
+w_random = compute_weights_fast(epsilon_random)
+
+NO_OF_STATE=100
+all_recall = average_recall(NO_OF_STATE,epsilon_random,w_random,NO_OF_ITERATIONS,P_perturb=0.4)
+print("\n% of recall = "+ str(100*np.sum((all_recall[:,0]-all_recall[:,1]) == 0) / NO_OF_STATE))
+
+all_P_perturb =np.arange(0.1,0.9,0.05)
+percent_recall = np.zeros((len(all_P_perturb),))
+for i, P_perturb in enumerate(all_P_perturb):
+    all_recall = average_recall(NO_OF_STATE,epsilon_random,w_random,NO_OF_ITERATIONS,P_perturb=P_perturb)
+    percent_recall[i]=100*np.sum((all_recall[:,0]-all_recall[:,1]) == 0) / NO_OF_STATE
+
+
+"""
+N is constant, and increase P/N to see the evolution of the memorization
+"""
+
+
