@@ -235,7 +235,10 @@ for i, P_perturb in enumerate(all_P_perturb):
     percent_recall[i]=100*np.sum((all_recall[:,0]-all_recall[:,1]) == 0) / NO_OF_STATE
 
 percent_recall, all_P_perturb=simulation_P_perturb(N,P, [0.2,0.6,0.02],P_sparsity=0.5,NO_OF_STATE=100)
+plt.figure()
 plt.plot(all_P_perturb,percent_recall)
+plt.xlabel('Probability of pixel perturbation')
+plt.ylabel('Recall (%)')
 
 """
 N is constant, and increase P/N to see the evolution of the memorization
@@ -252,6 +255,35 @@ for i, P in enumerate(all_P):
     all_percent_recall[i,:] = percent_recall
     print("P = "+str(P))
     
+
+plt.figure()
+plt.plot([],[],' ')
 for i in range(len(all_P)):
     plt.plot(sample_p,all_percent_recall[i,:])
+plt.legend(["P/N"] + [ '{:04.2f}'.format(i/N) for i in all_P])
+plt.xlabel('Probability of pixel perturbation')
+plt.ylabel('Recall (%)')
+
+# proba of perturbation fixed =0.1
+plt.figure()
+plt.plot(all_P,all_percent_recall[:,6])
+plt.xlabel("P/N")
+plt.ylabel("Recall (%)")
+
+"""
+proba fixed = 0.1
+"""
+
+all_P=np.arange(2,N,2)
+
+all_percent_recall_2 = np.zeros((len(all_P),1))
+for i, P in enumerate(all_P): 
+    percent_recall, all_P_perturb = simulation_P_perturb(N,P,[0.1,0.2,0.2],P_sparsity=0.5,NO_OF_STATE=500)
+    all_percent_recall_2[i,:] = percent_recall
+    print("P = "+str(P))
+
+plt.figure()
+plt.plot(all_P,all_percent_recall_2)
+plt.xlabel("P/N")
+plt.ylabel("Recall (%)")
 
