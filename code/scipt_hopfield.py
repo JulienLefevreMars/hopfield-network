@@ -284,6 +284,9 @@ for i, P in enumerate(all_P):
 
 plt.figure()
 plt.plot(all_P,all_percent_recall_2)
-plt.xlabel("P/N")
+plt.plot([0.14*N,0.14*N],[0,110],'k--')
+plt.xlabel("P")
 plt.ylabel("Recall (%)")
+plt.text(20,20,"P/N=0.14")
+plt.show()
 
