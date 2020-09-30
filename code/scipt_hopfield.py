@@ -243,19 +243,32 @@ plt.ylabel('Recall (%)')
 """
 N is constant, and increase P/N to see the evolution of the memorization
 """
-
 N=128
-sampling=[0.1,0.7,0.02]
-sample_p=np.arange(sampling[0],sampling[1],sampling[2])
-all_P=np.arange(2,40,4)
+if os.path.isfile("All_recall_varying_P_N_128_varying_noise.npz"):
+    data=np.load("All_recall_varying_P_N_128_varying_noise.npz")
+    all_percent_recall=data['all_percent_recall']
+    all_P=data['all_P']
+    sample_p=data['sample_p']
+else:
+    sampling=[0.1,0.7,0.02]
+    sample_p=np.arange(sampling[0],sampling[1],sampling[2])
+    all_P=np.arange(2,40,4)
 
-all_percent_recall = np.zeros((len(all_P),len(sample_p)))
-for i, P in enumerate(all_P): 
-    percent_recall, all_P_perturb = simulation_P_perturb(N,P,sampling,P_sparsity=0.5,NO_OF_STATE=100)
-    all_percent_recall[i,:] = percent_recall
-    print("P = "+str(P))
-    
+    all_percent_recall = np.zeros((len(all_P),len(sample_p)))
+    for i, P in enumerate(all_P): 
+        percent_recall, all_P_perturb = simulation_P_perturb(N,P,sampling,P_sparsity=0.5,NO_OF_STATE=100)
+        all_percent_recall[i,:] = percent_recall
+        print("P = "+str(P))
+    np.savez("All_recall_varying_P_N_128_varying_noise",all_percent_recall=all_percent_recall,
+             all_P=all_P,sample_p=sample_p)
 
+# Image
+plt.imshow(all_percent_recall,extent=[0.1,0.7,0.3,0.02])
+plt.xlabel('Probability of noise')
+plt.ylabel('P/N')
+plt.plot([0.1,0.7],[0.14,0.14],'k--')
+
+# Several curves
 plt.figure()
 plt.plot([],[],' ')
 for i in range(len(all_P)):
@@ -274,13 +287,18 @@ plt.ylabel("Recall (%)")
 proba fixed = 0.1
 """
 
-all_P=np.arange(2,N,2)
-
-all_percent_recall_2 = np.zeros((len(all_P),1))
-for i, P in enumerate(all_P): 
-    percent_recall, all_P_perturb = simulation_P_perturb(N,P,[0.1,0.2,0.2],P_sparsity=0.5,NO_OF_STATE=500)
-    all_percent_recall_2[i,:] = percent_recall
-    print("P = "+str(P))
+if os.path.isfile("All_recall_varying_P_N_128_noise_0.1.npz"):
+    data=np.load("All_recall_varying_P_N_128_noise_0.1.npz")
+    all_percent_recall_2=data['all_percent_recall_2']
+    all_P=data['all_P']
+else:
+    all_P=np.arange(2,N,2)
+    all_percent_recall_2 = np.zeros((len(all_P),1))
+    for i, P in enumerate(all_P): 
+        percent_recall, all_P_perturb = simulation_P_perturb(N,P,[0.1,0.2,0.2],P_sparsity=0.5,NO_OF_STATE=500)
+        all_percent_recall_2[i,:] = percent_recall
+        print("P = "+str(P))
+    np.savez("All_recall_varying_P_N_128_noise_0.1",all_percent_recall_2=all_percent_recall_2,all_P=all_P)
 
 plt.figure()
 plt.plot(all_P,all_percent_recall_2)
