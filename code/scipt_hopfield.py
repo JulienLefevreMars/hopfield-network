@@ -22,8 +22,6 @@ import seaborn as sns
 sns.set_palette('hls', 10)
 from matplotlib import cm
 
-size = 32
-N=size* size
 
 def image_to_np(path):
     im = Image.open(path)
@@ -100,7 +98,7 @@ def evolution_hopfield(test_array,epsilon,w,NO_OF_ITERATIONS):
         #         print(iteration)
             hamming_distance[iteration, i] = ((epsilon - test_array)[i]!=0).sum()
         plt.subplot(N_fig, N_fig,iteration+1)
-        plt.imshow(np.where(test_array.reshape(N_sqrt, N_sqrt)<1, 0, 1), cmap='gray')
+        plt.imshow(np.where(test_array.reshape(N_sqrt, N_sqrt)<1, 0, 1), cmap=cm.gray)
     return test_array,hamming_distance
 
 def evolution_hopfield_synchronous(test_array,epsilon,w,NO_OF_ITERATIONS,VERBOSE=False):
@@ -120,7 +118,7 @@ def evolution_hopfield_synchronous(test_array,epsilon,w,NO_OF_ITERATIONS,VERBOSE
             hamming_distance[iteration, i] = ((epsilon - test_array)[i]!=0).sum()
         if VERBOSE:
             plt.subplot(5, 5,iteration+1)
-            plt.imshow(np.where(test_array.reshape(N_sqrt, N_sqrt)<1, 0, 1), cmap='gray')
+            plt.imshow(np.where(test_array.reshape(N_sqrt, N_sqrt)<1, 0, 1), cmap=cm.gray)
     return test_array,hamming_distance
 
 def average_recall(Nstate,epsilon,w,NO_OF_ITERATIONS,P_perturb=0.2):
@@ -157,6 +155,9 @@ def simulation_P_perturb(N,P,sampling,P_sparsity=0.5,NO_OF_STATE=100,VERBOSE=Fal
 
 # Load digits images
 
+size = 32
+N=size* size
+
 epsilon = np.asarray([image_to_np(os.path.join(PATH, '0.jpg')),
                      image_to_np(os.path.join(PATH, '1.jpg')),
                      image_to_np(os.path.join(PATH, '2.jpg')),
@@ -173,10 +174,19 @@ digit = 7
 plt.figure()
 plt.imshow(epsilon[digit,:].reshape(size,size),cmap=cm.gray)
 
-plt.figure(figsize=[12,6])
+plt.figure(figsize=[6,10])
 for digit in range(10):
-    plt.subplot(2,5,digit+1)
+    plt.subplot(4,3,digit+1)
     plt.imshow(epsilon[digit,:].reshape(size,size),cmap=cm.gray)
+    
+# Correlation/distance between images
+    
+distances = np.zeros((10,10,2))
+for i in range(10):
+    for j in range(10):
+        C=np.corrcoef(epsilon[i,:],epsilon[j,:])
+        distances[i,j,0]=C[0,1]
+        distances[i,j,1]=(epsilon[i,:]!=epsilon[j,:]).sum()
 
 
 # Weights for only one image
@@ -198,12 +208,16 @@ plt.colorbar()
 # Associative memory
 # Perturbed digit
 
-perturbed_digit, index = perturbation(epsilon,p=0.3,perturbation_type='noise')
-plt.imshow(perturbed_digit.reshape(size,size))
+perturbed_digit, index = perturbation(epsilon,p=0.4,perturbation_type='noise')
+plt.imshow(perturbed_digit.reshape(size,size),cmap=cm.gray)
 
 #evolution_hopfield(perturbed_digit,epsilon,w,10)
 final_state,hamming_distance=evolution_hopfield_synchronous(perturbed_digit,epsilon,w,10,True)
-
+plt.figure()
+plt.plot(hamming_distance)
+plt.xlabel('Iterations')
+plt.ylabel('Hamming distance')
+plt.legend([str(i) for i in range(10)])
 """
 From several random configurations, what are the most frequent attractors ?
 """
@@ -211,7 +225,7 @@ From several random configurations, what are the most frequent attractors ?
 NO_OF_RANDOM_CONFIG = 500
 NO_OF_ITERATIONS = 20
 stats = np.zeros((NO_OF_RANDOM_CONFIG,3)) # col 1: pattern where it converges col 2: index of stabilization
-p=0.5
+p=0.8
 
 for n in range(NO_OF_RANDOM_CONFIG):
     random_state = np.random.choice([-1,1],p=[p,1-p], size=N)
