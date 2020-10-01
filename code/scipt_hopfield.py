@@ -20,6 +20,7 @@ import os
 from tqdm import tqdm
 import seaborn as sns
 sns.set_palette('hls', 10)
+from matplotlib import cm
 
 size = 32
 N=size* size
@@ -169,12 +170,30 @@ epsilon = np.asarray([image_to_np(os.path.join(PATH, '0.jpg')),
 
    
 digit = 7 
-plt.imshow(epsilon[digit,:].reshape(size,size))
+plt.figure()
+plt.imshow(epsilon[digit,:].reshape(size,size),cmap=cm.gray)
+
+plt.figure(figsize=[12,6])
+for digit in range(10):
+    plt.subplot(2,5,digit+1)
+    plt.imshow(epsilon[digit,:].reshape(size,size),cmap=cm.gray)
+
+
+# Weights for only one image
+    
+w_1 = compute_weights_fast(epsilon[1:2,:])
+
+plt.figure(figsize=[12,12])
+plt.imshow(w_1,cmap=cm.gray)
 
 # Hebian rule to obtain the weights
 
 w = compute_weights_fast(epsilon)
 P = epsilon.shape[0]
+
+plt.figure(figsize=[12,12])
+plt.imshow(w)
+plt.colorbar()
 
 # Associative memory
 # Perturbed digit
@@ -263,9 +282,11 @@ else:
              all_P=all_P,sample_p=sample_p)
 
 # Image
+    
+plt.figure()
 plt.imshow(all_percent_recall,extent=[0.1,0.7,0.3,0.02])
 plt.xlabel('Probability of noise')
-plt.ylabel('P/N')
+plt.ylabel('M/N')
 plt.plot([0.1,0.7],[0.14,0.14],'k--')
 
 # Several curves
@@ -273,14 +294,14 @@ plt.figure()
 plt.plot([],[],' ')
 for i in range(len(all_P)):
     plt.plot(sample_p,all_percent_recall[i,:])
-plt.legend(["P/N"] + [ '{:04.2f}'.format(i/N) for i in all_P])
+plt.legend(["M/N"] + [ '{:04.2f}'.format(i/N) for i in all_P])
 plt.xlabel('Probability of pixel perturbation')
 plt.ylabel('Recall (%)')
 
 # proba of perturbation fixed =0.1
 plt.figure()
 plt.plot(all_P,all_percent_recall[:,6])
-plt.xlabel("P/N")
+plt.xlabel("M/N")
 plt.ylabel("Recall (%)")
 
 """
@@ -303,8 +324,8 @@ else:
 plt.figure()
 plt.plot(all_P,all_percent_recall_2)
 plt.plot([0.14*N,0.14*N],[0,110],'k--')
-plt.xlabel("P")
+plt.xlabel("M")
 plt.ylabel("Recall (%)")
-plt.text(20,20,"P/N=0.14")
+plt.text(20,20,"M/N=0.14")
 plt.show()
 
