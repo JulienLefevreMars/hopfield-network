@@ -187,6 +187,9 @@ for i in range(10):
         C=np.corrcoef(epsilon[i,:],epsilon[j,:])
         distances[i,j,0]=C[0,1]
         distances[i,j,1]=(epsilon[i,:]!=epsilon[j,:]).sum()
+        
+plt.imshow(distances[:,:,0])
+plt.colorbar()
 
 
 # Weights for only one image
@@ -337,7 +340,7 @@ else:
 
 plt.figure()
 plt.plot(all_P,all_percent_recall_2)
-plt.plot([0.14*N,0.14*N],[0,110],'k--')
+plt.semilogx([0.14*N,0.14*N],[0,110],'k--')
 plt.xlabel("M")
 plt.ylabel("Recall (%)")
 plt.text(20,20,"M/N=0.14")
